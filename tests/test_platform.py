@@ -58,3 +58,21 @@ def test_tenant_scope_and_unauthenticated(client):
 
 def test_health(client):
     assert client.get("/health").json()["status"]=="ok"
+
+def test_assurance_gate_blocks_unassured_asset(client):
+    org=boot(client);headers=h(org["api_key"])
+    a=client.post("/v1/assets",headers=headers,json={
+        "name":"Gated agent","version":"1",
+        "authority_contract":{"allowed_actions":["execute"],"require_assured":True,"max_autonomy":"bounded"}
+    }).json()
+    body={"asset_id":a["asset_id"],"action":"execute"}
+    denied=client.post("/v1/authority/authorize",headers=headers,json=body).json()
+    assert denied["outcome"]=="DENY"
+    policy=client.post("/v1/policies",headers=headers,json={
+        "name":"Gate policy","rules":[{"metric":"quality","operator":"gte","threshold":0.9}]
+    }).json()
+    client.post("/v1/assessments",headers=headers,json={
+        "asset_id":a["asset_id"],"policy_id":policy["policy_id"],"metrics":{"quality":0.95}
+    })
+    allowed=client.post("/v1/authority/authorize",headers=headers,json=body).json()
+    assert allowed["outcome"]=="ALLOW"

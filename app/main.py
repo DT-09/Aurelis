@@ -116,6 +116,10 @@ class Store:
         with self.db() as c:
             c.execute("INSERT INTO assessments VALUES(?,?,?,?,?,?,?,?,?,?)",(x["assessment_id"],org,x["asset_id"],x.get("policy_id"),x["verdict"],canon(x["metrics"]),canon(x["evidence_ids"]),canon(x["findings"]),x["evaluator"],x["created_at"]))
             self.event(c,org,"assurance.assessed",x["assessment_id"],{"asset_id":x["asset_id"],"verdict":x["verdict"],"findings_hash":sha(x["findings"])})
+    def latest_assessment(self,org,asset_id):
+        with self.db() as c:
+            r=c.execute("SELECT id,verdict,created FROM assessments WHERE org=? AND asset=? ORDER BY created DESC LIMIT 1",(org,asset_id)).fetchone()
+        return {"assessment_id":r["id"],"verdict":r["verdict"],"created_at":r["created"]} if r else None
     def save_decision(self,org,x):
         with self.db() as c:
             c.execute("INSERT INTO decisions VALUES(?,?,?,?,?,?,?,?)",(x["decision_id"],org,x["asset_id"],x["action"],x["outcome"],canon(x["reasons"]),canon(x["context"]),x["created_at"]))
@@ -142,11 +146,12 @@ class AssetIn(Strict):
     @field_validator("authority_contract")
     @classmethod
     def contract(cls,v):
-        allowed={"allowed_actions","denied_actions","human_approval_actions","max_autonomy","purpose","data_boundaries"}
+        allowed={"allowed_actions","denied_actions","human_approval_actions","max_autonomy","require_assured","purpose","data_boundaries"}
         if set(v)-allowed:raise ValueError("Unsupported authority contract field.")
         for k in ("allowed_actions","denied_actions","human_approval_actions"):
             if k in v and (not isinstance(v[k],list) or not all(isinstance(a,str) and a.strip() for a in v[k])):raise ValueError(f"{k} must be a list of non-empty strings.")
         if v.get("max_autonomy","supervised") not in {"manual","supervised","bounded","autonomous"}:raise ValueError("Invalid max_autonomy.")
+        if "require_assured" in v and not isinstance(v["require_assured"],bool):raise ValueError("require_assured must be boolean.")
         return v
 class EvidenceIn(Strict): asset_id:str; evidence_type:str=Field(min_length=2,max_length=80); source:str=Field(min_length=2,max_length=240); payload:dict[str,Any]
 class Rule(Strict):
@@ -206,6 +211,8 @@ class Engine:
         c=asset["authority_contract"]; allowed=set(c.get("allowed_actions",[])); denied=set(c.get("denied_actions",[])); approval=set(c.get("human_approval_actions",[]))
         if b.action in denied:outcome,reasons="DENY",["Action explicitly denied by authority contract."]
         elif b.action not in allowed:outcome,reasons="DENY",["Action not explicitly granted; default-deny applies."]
+        elif c.get("require_assured",False) and (not self.s.latest_assessment(organization_id,asset_id) or self.s.latest_assessment(organization_id,asset_id)["verdict"]!="ASSURED"):
+            outcome,reasons="DENY",["Authority contract requires the latest recorded assessment to be ASSURED."]
         elif (b.action in approval or c.get("max_autonomy","supervised")=="manual") and not b.human_approved:outcome,reasons="REQUIRES_HUMAN_APPROVAL",["Authority contract requires human approval for this action under its autonomy ceiling."]
         else:outcome,reasons="ALLOW",["Action is within the explicit authority contract."]
         x={"decision_id":ident("dec"),"asset_id":b.asset_id,"action":b.action,"outcome":outcome,"reasons":reasons,"context":b.context,"created_at":utc()}
