@@ -76,3 +76,14 @@ def test_assurance_gate_blocks_unassured_asset(client):
     })
     allowed=client.post("/v1/authority/authorize",headers=headers,json=body).json()
     assert allowed["outcome"]=="ALLOW"
+
+def test_key_rotation_and_revocation(client):
+    org=boot(client);old=org["api_key"];headers=h(old)
+    replacement=client.post("/v1/keys",headers=headers,json={"name":"replacement"}).json()
+    assert replacement["api_key"].startswith("aur_")
+    revoked=client.delete("/v1/keys/"+org["key_id"],headers=headers)
+    assert revoked.status_code==200
+    assert client.get("/v1/assets",headers=h(old)).status_code==401
+    assert client.get("/v1/assets",headers=h(replacement["api_key"])).status_code==200
+    last=client.delete("/v1/keys/"+replacement["key_id"],headers=h(replacement["api_key"]))
+    assert last.status_code==409

@@ -29,7 +29,7 @@ Store the returned API key in a secret manager. It is shown only once.
 3. Define deterministic rules at POST /v1/policies.
 4. Evaluate metrics and evidence at POST /v1/assessments.
 5. Request action authorization at POST /v1/authority/authorize.
-6. Verify the audit history at GET /v1/audit/verify.
+6. Rotate credentials with POST /v1/keys; revoke the old key with DELETE /v1/keys/{key_id}. Keep at least one active key.\n7. Verify the audit history at GET /v1/audit/verify.
 
 ## Container
 

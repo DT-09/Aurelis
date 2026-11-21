@@ -49,7 +49,7 @@ Tenant endpoints require `X-Aurelis-Key: aur_<key-id>.<secret>`.
 3. `POST /v1/policies` — define deterministic metric rules.
 4. `POST /v1/assessments` — evaluate metrics and evidence.
 5. `POST /v1/authority/authorize` — request a default-deny action decision.
-6. `GET /v1/audit/events` and `GET /v1/audit/verify` — inspect and verify the audit trail.
+6. `POST /v1/keys` and `DELETE /v1/keys/{key_id}` — rotate and revoke credentials without locking out the organization.\n7. `GET /v1/audit/events` and `GET /v1/audit/verify` — inspect and verify the audit trail.
 
 See [Architecture](docs/ARCHITECTURE.md), [Threat model](docs/THREAT_MODEL.md), and [Operations](docs/OPERATIONS.md).
 

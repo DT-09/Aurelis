@@ -79,6 +79,15 @@ class Store:
         with self.db() as c: row=c.execute("SELECT org,salt,hash FROM keys WHERE id=? AND revoked IS NULL",(kid,)).fetchone()
         if not row: return None
         return row["org"] if hmac.compare_digest(self.keyhash(secret,bytes(row["salt"])),row["hash"]) else None
+    def revoke_key(self,org,kid):
+        with self.db() as c:
+            row=c.execute("SELECT id FROM keys WHERE id=? AND org=? AND revoked IS NULL",(kid,org)).fetchone()
+            if not row:return False
+            active=c.execute("SELECT COUNT(*) AS n FROM keys WHERE org=? AND revoked IS NULL",(org,)).fetchone()["n"]
+            if active<=1:raise ValueError("Cannot revoke the only active key. Create a replacement first.")
+            c.execute("UPDATE keys SET revoked=? WHERE id=? AND org=?",(utc(),kid,org))
+            self.event(c,org,"credential.revoked",kid,{})
+        return True
     def add_asset(self,org,b):
         aid=ident("ast"); created=utc()
         with self.db() as c:
@@ -265,6 +274,12 @@ def create_key(b:KeyIn,req:Request,org:str=Depends(tenant)):
     with store(req).db() as c:
         result=store(req).newkey(c,org,b.name);store(req).event(c,org,"credential.created",result["key_id"],{"name":b.name})
         return result
+@app.delete("/v1/keys/{key_id}")
+def revoke_key(key_id:str,req:Request,org:str=Depends(tenant)):
+    try:
+        if not store(req).revoke_key(org,key_id):raise HTTPException(404,"Key not found.")
+        return {"revoked":True,"key_id":key_id}
+    except ValueError as e:raise HTTPException(409,str(e)) from e
 @app.get("/v1/audit/events")
 def audit(req:Request,limit:int=200,org:str=Depends(tenant)):
     if not 1<=limit<=1000:raise HTTPException(422,"limit must be between 1 and 1000.")
