@@ -211,7 +211,7 @@ class Engine:
         c=asset["authority_contract"]; allowed=set(c.get("allowed_actions",[])); denied=set(c.get("denied_actions",[])); approval=set(c.get("human_approval_actions",[]))
         if b.action in denied:outcome,reasons="DENY",["Action explicitly denied by authority contract."]
         elif b.action not in allowed:outcome,reasons="DENY",["Action not explicitly granted; default-deny applies."]
-        elif c.get("require_assured",False) and (not self.s.latest_assessment(organization_id,asset_id) or self.s.latest_assessment(organization_id,asset_id)["verdict"]!="ASSURED"):
+        elif c.get("require_assured",False) and (not self.s.latest_assessment(org,b.asset_id) or self.s.latest_assessment(org,b.asset_id)["verdict"]!="ASSURED"):
             outcome,reasons="DENY",["Authority contract requires the latest recorded assessment to be ASSURED."]
         elif (b.action in approval or c.get("max_autonomy","supervised")=="manual") and not b.human_approved:outcome,reasons="REQUIRES_HUMAN_APPROVAL",["Authority contract requires human approval for this action under its autonomy ceiling."]
         else:outcome,reasons="ALLOW",["Action is within the explicit authority contract."]
