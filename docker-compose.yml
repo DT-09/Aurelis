@@ -1,0 +1,22 @@
+services:
+  aurelis:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      AURELIS_ENVIRONMENT: production
+      AURELIS_BOOTSTRAP_KEY: ${AURELIS_BOOTSTRAP_KEY:?Set AURELIS_BOOTSTRAP_KEY}
+      AURELIS_CORS_ORIGINS: ${AURELIS_CORS_ORIGINS:?Set explicit browser origins}
+      AURELIS_DB_PATH: /srv/aurelis/data/aurelis.sqlite3
+    volumes:
+      - aurelis_data:/srv/aurelis/data
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+volumes:
+  aurelis_data:
