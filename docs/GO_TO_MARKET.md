@@ -6,6 +6,22 @@
 
 Do not sell generic AI strategy, AI transformation or a dashboard. Sell a bounded economic decision for one live workflow.
 
+## Competitive reality and the wedge to test
+
+This is an existing category. Aurelis must not claim to invent AI cost-per-outcome measurement or to be the only platform connecting AI spend to business results.
+
+- CloudZero publicly documents AI spend allocation, custom unit metrics, cost per AI outcome, shared-cost allocation and business-outcome attribution: https://www.cloudzero.com/solutions/ai/ and https://www.cloudzero.com/blog/cost-per-ai-outcome/
+- CloudZero's unit-economics documentation accepts business metrics through telemetry/API or CSV: https://docs.cloudzero.com/docs/unit-economics
+- The 2026 category includes FinOps, gateways, observability and outcome-attribution vendors; buyer tooling may already cover part or all of the need: https://infro.io/blog/ai-cost-management-tools-for-finance-teams
+
+Therefore, Aurelis must qualify a specific gap rather than compete on generic dashboards:
+1. Cost per *verified successful business outcome*, not tokens or requests alone.
+2. Explicit inclusion of human review, escalation and rework where reliable records exist.
+3. Source-to-result traceability, coverage reporting and transparent limitations.
+4. A buyer-side decision memo that tests whether the incumbent's own data can support a scale/no-scale decision.
+
+This wedge is a hypothesis to test, not a proven differentiation. If an incumbent platform already reconciles these items for the prospect, do not sell Aurelis the same job. Identify a distinct gap or disqualify the account.
+
 ## Ideal customer profile
 
 Qualify only an organization that:
