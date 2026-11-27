@@ -41,7 +41,7 @@ def ensure_schema(s):
             value_status TEXT NOT NULL, currency TEXT NOT NULL,
             source TEXT NOT NULL, reference TEXT NOT NULL,
             occurred_at TEXT NOT NULL, idempotency_key TEXT NOT NULL,
-            created TEXT NOT NULL, UNIQUE(org,idempotency_key)
+            payload_hash TEXT NOT NULL, created TEXT NOT NULL, UNIQUE(org,idempotency_key)
         );
         CREATE INDEX IF NOT EXISTS outcomes_workflow_time ON workflow_outcomes(org,workflow,occurred_at);
         CREATE TABLE IF NOT EXISTS commercial_inquiries(
@@ -51,6 +51,14 @@ def ensure_schema(s):
         );
         """)
         
+        # Migrate databases created before payload-hash idempotency was introduced.
+        # Explicit INSERT column lists below keep this safe regardless of ALTER TABLE order.
+        for table in ("workflow_costs", "workflow_outcomes"):
+            columns = {row["name"] for row in c.execute(f"PRAGMA table_info({table})")}
+            if "payload_hash" not in columns:
+                c.execute(
+                    f"ALTER TABLE {table} ADD COLUMN payload_hash TEXT NOT NULL DEFAULT ''"
+                )
 
 def normalize_time(value):
     if value is None:
@@ -206,7 +214,10 @@ def record_cost(workflow_id: str, body: CostIn, request: Request, org: str = Dep
                 raise HTTPException(409, "Idempotency key already belongs to a different cost record.")
             return {"cost_id": existing["id"], "duplicate": True}
         c.execute(
-            "INSERT INTO workflow_costs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+            """INSERT INTO workflow_costs
+               (id,org,workflow,category,amount,currency,source,reference,occurred_at,
+                idempotency_key,payload_hash,created)
+               VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
             (cost_id, org, workflow_id, body.category, body.amount, body.currency,
              body.source, body.reference, occurred, body.idempotency_key, payload_hash, created),
         )
@@ -243,7 +254,10 @@ def record_outcome(workflow_id: str, body: OutcomeIn, request: Request, org: str
                 raise HTTPException(409, "Idempotency key already belongs to a different outcome record.")
             return {"outcome_id": existing["id"], "duplicate": True}
         c.execute(
-            "INSERT INTO workflow_outcomes VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            """INSERT INTO workflow_outcomes
+               (id,org,workflow,status,first_pass,value_amount,value_status,currency,
+                source,reference,occurred_at,idempotency_key,payload_hash,created)
+               VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (outcome_id, org, workflow_id, body.status, int(body.first_pass),
              body.value_amount, body.value_status, body.currency, body.source,
              body.reference, occurred, body.idempotency_key, payload_hash, created),
