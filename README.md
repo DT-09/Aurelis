@@ -81,7 +81,7 @@ python -m compileall -q app tests
 pytest -q
 ```
 
-See [Commercial Product Specification](docs/COMMERCIAL_PRODUCT.md), [Architecture](docs/ARCHITECTURE.md), [Threat Model](docs/THREAT_MODEL.md) and [Operations](docs/OPERATIONS.md).
+Commercial operating documents: [Go-to-market](docs/GO_TO_MARKET.md), [Delivery Playbook](docs/DELIVERY_PLAYBOOK.md), [Buyer Evidence](docs/BUYER_EVIDENCE.md), [Commercial Product Specification](docs/COMMERCIAL_PRODUCT.md), [Product Vision](docs/PRODUCT_VISION.md), [Architecture](docs/ARCHITECTURE.md), [Threat Model](docs/THREAT_MODEL.md) and [Operations](docs/OPERATIONS.md).
 
 ## License
 
