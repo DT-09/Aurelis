@@ -42,7 +42,7 @@ A complimentary 60-minute Workflow Economics Review:
 - identify missing evidence and attribution gaps;
 - return a concise measurement plan and a go / redesign / do-not-scale recommendation.
 
-Paid next step: a bounded, paid Workflow Economics Assessment for one workflow, with agreed data scope, deliverables, acceptance criteria and price before work begins.
+Paid next step: the initial test offer is a USD 1,500 fixed-fee AI Workflow Economics Assessment, scoped to one workflow, one 30-day reporting period, up to three authorized exports and up to 10 analyst hours. Target delivery is 10 business days after complete usable inputs. This is a proposed test price, not evidence of existing willingness to pay. The written scope must define source coverage, exclusions, deliverables, acceptance criteria, data handling and payment terms before work begins.
 
 Recurring product: enterprise subscription for continuous workflow cost/outcome ingestion, economics reporting, alerts, evidence history and portfolio governance. Commercial pricing is quoted only after scope and buyer willingness-to-pay are established; no unsupported price claims.
 
