@@ -1,61 +1,94 @@
 # Aurelis — product vision
 
+## Category
+
+Enterprise AI workflow economics and value infrastructure.
+
 ## Mission
 
-Make the authority of AI systems explicit, enforceable, inspectable and revocable across their full operational lifecycle. Aurelis is the independent control plane between AI systems and the real-world tools, data and decisions they can affect.
+Make the economics of AI-enabled work measurable at the level where business decisions are made: the workflow and its successful outcome.
 
-## The problem
+Aurelis connects operating costs, human effort, rework, outcome quality and customer-approved value evidence. It gives finance, AI and operations leaders a defensible basis to decide which workflows to scale, redesign, pause or retire.
 
-Organizations deploy models and agents across vendors, frameworks and business units. Their identities, permissions, evaluations, operational evidence and incident records live in separate systems. A policy document does not constrain a tool call. A model evaluation does not establish who authorized a deployment. A log does not prove that the recorded event is complete or untampered.
+## The expensive problem
 
-Aurelis connects these concerns into one traceable control loop.
+Enterprise AI reporting is fragmented:
+
+- Model providers report usage and inference charges.
+- Cloud platforms report compute consumption.
+- Operations teams record completed work, exceptions and rework.
+- Managers estimate productivity and savings.
+- Finance needs attributable, reviewable economic outcomes.
+
+These records rarely share a common workflow identifier, outcome definition or evidence standard. As a result, leaders can see AI activity without being able to reconcile the full cost of a successful business outcome.
+
+Aurelis addresses this gap. It does not assume that AI usage creates value.
+
+## Initial customer
+
+An enterprise already operating material AI-enabled workflows, with:
+- a named workflow owner;
+- recurring volume and measurable outcomes;
+- identifiable model, infrastructure and tooling costs;
+- human review, escalation or rework;
+- an executive sponsor accountable for AI economics.
+
+Economic buyers: CFO, finance transformation leader, CIO or Chief AI Officer.
+Operational champions: AI platform/FinOps leader, automation director or workflow operations leader.
+
+Aurelis should initially qualify buyers with a live measurement problem and a current decision about scaling, redesigning or controlling an AI workflow.
+
+## Core product
+
+1. **Workflow registry** — workflow purpose, owner, outcome definition and reporting currency.
+2. **Cost ledger** — source-linked model, compute, tooling, human review, rework and other costs.
+3. **Outcome ledger** — successful/failed outcomes, first-pass success and exception/rework status.
+4. **Value evidence** — customer-approved rules that distinguish verified, estimated and unverified value.
+5. **Economics engine** — fully loaded cost per successful outcome, first-pass success, verified net value and verified ROI when evidence supports it.
+6. **Decision record** — explicit data coverage, assumptions, limitations and a go / redesign / pause recommendation.
+7. **Audit history** — tenant-scoped event history, source references and deterministic calculations.
+
+## Initial commercial wedge
+
+Start with one workflow, not an enterprise-wide platform rollout.
+
+The first paid engagement is a bounded AI Workflow Economics Assessment. It reconciles customer-approved exports and operating records, identifies missing cost/value evidence, calculates defensible unit economics where the data permits, and gives the buyer a decision-ready report.
+
+The software supports repeatable calculations and evidence history. The initial delivery may include controlled analyst-led data mapping because native integrations are not yet implemented.
 
 ## Product invariants
 
-1. **Least authority:** no implied permissions; default deny.
-2. **Separation of duties:** asset owner, policy author, approver and operator are distinct roles in the target architecture.
-3. **Evidence before claims:** assurance verdicts are tied to versioned evidence, explicit metrics and policy versions.
-4. **Explainable decisions:** every authorization returns a machine-readable outcome and reasons.
-5. **Fail-closed enforcement:** integrations do not execute protected actions when the control plane cannot provide a valid decision.
-6. **Vendor neutrality:** the core protocol does not depend on a particular model provider or agent framework.
-7. **Reversibility:** authority grants, deployments and policy changes must be time-bounded, auditable and revocable.
-8. **No false certification:** passing a configured policy is not universal safety, legal compliance or independent certification.
+- Evidence before claims: no savings or ROI claim without an explicit evidence rule.
+- Cost completeness is visible: missing sources are stated, never silently treated as zero.
+- Outcome definitions are explicit and agreed with the customer.
+- Estimated value is never presented as verified value.
+- Currency boundaries are preserved.
+- Duplicate ingestion is prevented through idempotency.
+- Every result is reproducible from supplied records and documented calculation rules.
+- No autonomous financial decisions or write access to customer systems.
 
-## End-state architecture
+## What Aurelis is not
 
-### 1. Identity and asset registry
-Organizations, human identities, service identities, agents, models, tools, datasets, deployments, versions, owners, environments and dependency relationships. Target integrations include OIDC/SSO, SCIM, cloud IAM and common agent frameworks.
-
-### 2. Authority graph
-Versioned authority contracts define principals, resources, actions, purposes, data boundaries, conditions, delegation depth, expiry and approval requirements. Policy evaluation uses explicit grants and denials, least privilege and deny-overrides semantics. Every grant has an owner and review date.
-
-### 3. Assurance and evidence fabric
-Evidence is collected from evaluations, CI pipelines, red-team tests, model cards, deployment manifests, monitoring systems, incidents and human reviews. Each item carries provenance, source identity, asset/version binding, timestamp, integrity hash and verification status. Policies are versioned and deterministic where possible.
-
-### 4. Runtime enforcement plane
-SDKs, middleware and gateway adapters intercept tool calls and ask Aurelis for a decision. Decisions bind to the exact principal, action, resource, context, policy revision and expiry. Short-lived signed decision tokens prevent replay and stale grants. Enforcement points fail closed on timeout, invalid signature, stale policy or unavailable control plane.
-
-### 5. Continuous operational assurance
-Telemetry and event streams update reliability, drift, dependency health, policy compliance and risk state. Threshold breaches trigger re-evaluation, restriction, quarantine or human escalation. Recovery actions are explicit and reversible. Provider and tool dependencies are mapped to blast radius and fallback readiness.
-
-### 6. Governance and audit
-A tamper-evident event ledger records identity changes, policy revisions, evidence intake, assessments, approvals, grants, denials, incidents and overrides. External signed checkpoints anchor the ledger. Governance views show ownership, exceptions, expiry, control coverage and unresolved risks.
-
-### 7. Integration and deployment
-A stable API and protocol, SDKs, CI checks, webhooks, policy-as-code, cloud deployment adapters, observability integrations and enterprise identity connectors. Deployment modes target single-tenant self-hosted, managed control plane and hybrid edge enforcement.
-
-## Core user journeys
-
-- **Register:** discover or register an AI asset, its owner, version, environment and dependencies.
-- **Define authority:** specify allowed actions, denied actions, data scope, autonomy ceiling, expiry and approval gates.
-- **Prove readiness:** attach provenance-backed evidence and run policy evaluations before deployment.
-- **Enforce:** intercept each protected tool action and obtain a context-bound decision.
-- **Observe:** stream operational evidence and detect drift, policy violations and dependency failures.
-- **Respond:** suspend a grant, quarantine an asset, require review or roll back to a known state.
-- **Audit:** reconstruct who changed what, which evidence and policy applied, and why a decision was made.
+- Not a token dashboard or generic AI observability product.
+- Not an accounting system, statutory audit, valuation, tax opinion or compliance certification.
+- Not an AI implementation agency.
+- Not a promise that every AI workflow will produce positive ROI.
+- Not a fully integrated enterprise platform in the current release.
 
 ## Current implementation boundary
 
-The repository currently implements a single-instance Python/FastAPI control plane with SQLite, one-time organization bootstrap, salted API-key hashing, asset registration, explicit action grants/denials, human-approval flags, policy assessments, evidence hashes, a hash-linked audit log and a small browser console.
+Implemented: FastAPI service, organization bootstrap, API-key authentication, tenant-scoped SQLite storage, workflow registry, cost and outcome ingestion, deterministic economics calculations, idempotency, hash-linked event history, portfolio reporting and commercial inquiry intake.
 
-The following end-state capabilities are not yet implemented: multi-organization onboarding and roles, SSO/SCIM, delegated authority graph, signed short-lived runtime decisions, real tool-gateway adapters, continuous telemetry ingestion, incident automation, external audit anchoring, PostgreSQL/high availability, billing, and production-grade authenticated approval. The architecture above is the product target, not a claim that these functions already exist.
+Not implemented: native enterprise connectors, SSO/SCIM, fine-grained RBAC, PostgreSQL/high availability, automated data mapping, external immutable audit anchoring, independent penetration testing, enterprise security certification, billing and production support commitments.
+
+The current release is an evaluation and controlled-assessment system. Do not ingest confidential customer data or represent it as enterprise-production-ready until security, privacy, contractual and deployment controls are reviewed.
+
+## North-star outcome
+
+For each in-scope AI workflow, the buyer can answer:
+
+1. What did one successful outcome actually cost?
+2. How much human review and rework was required?
+3. What value is supported by accepted evidence?
+4. What data is missing?
+5. Should this workflow be scaled, redesigned, paused or stopped?
