@@ -131,3 +131,21 @@ def test_zero_verified_value_is_negative_return_when_verified(client):
     })
     result = client.get(f"/v1/workflows/{wid}/economics", headers=h).json()
     assert result["unit_economics"]["verified_roi"] == -1
+
+def test_outcome_idempotency_rejects_changed_payload(client):
+    key = bootstrap(client)
+    wid = workflow(client, key)
+    h = headers(key)
+    first = {
+        "status": "successful", "first_pass": True, "value_amount": 25,
+        "value_status": "verified", "currency": "USD", "source": "approved ledger",
+        "idempotency_key": "outcome-idempotency-001"
+    }
+    created = client.post(f"/v1/workflows/{wid}/outcomes", headers=h, json=first)
+    assert created.status_code == 201
+    duplicate = client.post(f"/v1/workflows/{wid}/outcomes", headers=h, json=first)
+    assert duplicate.status_code == 201
+    assert duplicate.json()["duplicate"] is True
+    changed = {**first, "value_amount": 50}
+    conflict = client.post(f"/v1/workflows/{wid}/outcomes", headers=h, json=changed)
+    assert conflict.status_code == 409
