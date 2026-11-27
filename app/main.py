@@ -289,3 +289,8 @@ def verify(req:Request,org:str=Depends(tenant)):return store(req).verify(org)
 app.mount("/console",StaticFiles(directory="static",html=True),name="console")
 @app.get("/",include_in_schema=False)
 def root():return FileResponse("static/index.html")
+
+
+# Commercial workflow-economics product surface.
+from app.economics import router as economics_router
+app.include_router(economics_router)

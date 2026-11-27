@@ -1,21 +1,28 @@
 # Aurelis
 
-**AI authority and assurance infrastructure.** A vendor-neutral control plane that makes AI identity, delegated authority, assurance evidence, policy decisions and audit history explicit.
+**Enterprise AI Workflow Economics and Value Infrastructure.**
 
-Aurelis follows one governing rule: an AI system receives no authority by implication. An action must be explicitly granted, must not be explicitly denied, and must satisfy any configured human-approval gate. Unknown actions default to deny.
+Aurelis measures the economics of AI-enabled work at the workflow level. It reconciles explicitly ingested delivery costs—model inference, compute, tooling, human review and rework—with successful outcomes and evidence-backed value.
 
-## Integrated control loop
+The commercial question is simple: **what does one successful AI-assisted outcome actually cost, and what verified value does it create?**
 
-`Identity → Authority → Evidence → Policy → Decision → Audit`
+## What the product does
 
-| System | Capability |
-|---|---|
-| Identity & ownership | Tenant-scoped credentials and AI asset registry |
-| Authority | Per-asset contracts for allowed, denied and human-gated actions |
-| Assurance | Deterministic policy evaluation: ASSURED / DEGRADED / BLOCKED / UNKNOWN |
-| Evidence | Asset-bound source records with SHA-256 content hashes |
-| Audit | Per-tenant hash-linked event history and integrity verification |
-| Operator surface | Browser console and versioned JSON API |
+- Register AI-enabled business workflows and accountable owners.
+- Ingest cost records with source references and idempotency keys.
+- Ingest successful and failed outcomes, including first-pass success.
+- Separate verified value from estimated or unverified value.
+- Calculate fully loaded cost per successful outcome, first-pass success rate, verified net value and verified ROI.
+- Preserve tenant-scoped records and append events to the existing hash-linked audit history.
+- Provide portfolio reporting without mixing currencies.
+
+## Commercial path
+
+1. Complimentary 60-minute Workflow Economics Review for one workflow.
+2. Paid, bounded Workflow Economics Assessment with agreed scope and acceptance criteria.
+3. Recurring enterprise subscription for continuous measurement, evidence history and portfolio reporting.
+
+Aurelis does not publish invented customer results or unsupported savings claims. Pricing is scoped with the buyer after workflow complexity, data access and procurement requirements are understood.
 
 ## Quick start
 
@@ -38,26 +45,33 @@ curl -X POST http://127.0.0.1:8000/v1/bootstrap \
   -d '{"organization_name":"Example"}'
 ```
 
-Save the returned API key securely. It is shown only once; only a salted PBKDF2-HMAC-SHA256 hash is stored.
+Save the returned API key securely. It is shown only once.
 
-## API workflow
+## Economics API
 
-Tenant endpoints require `X-Aurelis-Key: aur_<key-id>.<secret>`.
+All workflow endpoints require `X-Aurelis-Key: aur_<key-id>.<secret>`.
 
-1. `POST /v1/assets` — register an asset and authority contract.
-2. `POST /v1/evidence` — attach evidence to the asset.
-3. `POST /v1/policies` — define deterministic metric rules.
-4. `POST /v1/assessments` — evaluate metrics and evidence.
-5. `POST /v1/authority/authorize` — request a default-deny action decision.
-6. `POST /v1/keys` and `DELETE /v1/keys/{key_id}` — rotate and revoke credentials without locking out the organization.\n7. `GET /v1/audit/events` and `GET /v1/audit/verify` — inspect and verify the audit trail.
+1. `POST /v1/workflows` — register a workflow, owner and reporting currency.
+2. `POST /v1/workflows/{workflow_id}/costs` — ingest categorized delivery costs.
+3. `POST /v1/workflows/{workflow_id}/outcomes` — record successful or failed outcomes and value evidence.
+4. `GET /v1/workflows/{workflow_id}/economics?days=30` — calculate unit economics.
+5. `GET /v1/economics/portfolio?days=30` — review workflow-level economics.
+6. `GET /v1/audit/events` and `GET /v1/audit/verify` — inspect and verify the event history.
 
-See [Architecture](docs/ARCHITECTURE.md), [Threat model](docs/THREAT_MODEL.md), and [Operations](docs/OPERATIONS.md).
+Cost categories: `model_inference`, `compute`, `tooling`, `human_review`, `rework`, `other`.
 
-## Deployment and release boundary
+## Evidence rules
 
-Dockerfile and Docker Compose configuration are included. SQLite is the embedded, single-instance persistence layer. This release does **not** claim multi-instance high availability, automatic runtime interception, SSO/SCIM, fine-grained RBAC, independently authenticated human approval, external immutable audit anchoring, compliance certification, or independent security testing.
+- ROI uses verified value only. Estimated value is displayed separately.
+- Costs must use the workflow's reporting currency.
+- Idempotency keys prevent duplicate event ingestion.
+- Failed outcomes cannot claim first-pass success or realized value.
+- Missing source systems make the economics incomplete; the API states this limitation.
+- These calculations are operational measurement, not an independently audited financial statement.
 
-Integrators must enforce decisions at the actual tool-execution boundary and fail closed when Aurelis is unavailable. A passing assessment means supplied metrics met supplied rules; it is not proof of universal safety or regulatory compliance.
+## Current deployment boundary
+
+The current persistence layer is SQLite and supports a single application instance. Native enterprise connectors, SSO/SCIM, fine-grained RBAC, external immutable audit anchoring, multi-region availability and independent security testing are not claimed. Do not use real customer data until security, privacy, contractual and deployment controls have been reviewed.
 
 ## Development
 
@@ -66,6 +80,8 @@ pip install -r requirements.txt
 python -m compileall -q app tests
 pytest -q
 ```
+
+See [Commercial Product Specification](docs/COMMERCIAL_PRODUCT.md), [Architecture](docs/ARCHITECTURE.md), [Threat Model](docs/THREAT_MODEL.md) and [Operations](docs/OPERATIONS.md).
 
 ## License
 
