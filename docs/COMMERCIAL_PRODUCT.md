@@ -27,7 +27,7 @@ Initial account qualification: an enterprise already running at least one materi
 - Fully loaded cost = sum of explicitly ingested cost records in the reporting period.
 - Cost per successful outcome = fully loaded cost / successful outcomes.
 - First-pass success rate = successful outcomes marked first-pass / successful outcomes.
-- Verified value = sum of value amounts classified as verified for successful outcomes.
+- Verified value = sum of value amounts classified as verified for successful outcomes. The current API records the caller's classification and source reference; it does not independently validate the underlying business event.
 - Verified ROI = (verified value - fully loaded cost) / fully loaded cost, only when cost and verified value are both present.
 - Estimated and unverified value never enters verified ROI.
 - Failed outcomes cannot claim first-pass success or realized value.

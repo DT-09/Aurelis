@@ -8,7 +8,7 @@ import re
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.main import BOOTSTRAP, canon, ident, store, tenant, utc
+from app.main import BOOTSTRAP, canon, ident, sha, store, tenant, utc
 
 router = APIRouter()
 CURRENCY = re.compile(r"^[A-Z]{3}$")
@@ -31,7 +31,7 @@ def ensure_schema(s):
             category TEXT NOT NULL, amount REAL NOT NULL CHECK(amount >= 0),
             currency TEXT NOT NULL, source TEXT NOT NULL, reference TEXT NOT NULL,
             occurred_at TEXT NOT NULL, idempotency_key TEXT NOT NULL,
-            created TEXT NOT NULL, UNIQUE(org,idempotency_key)
+            payload_hash TEXT NOT NULL, created TEXT NOT NULL, UNIQUE(org,idempotency_key)
         );
         CREATE INDEX IF NOT EXISTS costs_workflow_time ON workflow_costs(org,workflow,occurred_at);
         CREATE TABLE IF NOT EXISTS workflow_outcomes(
@@ -195,17 +195,20 @@ def record_cost(workflow_id: str, body: CostIn, request: Request, org: str = Dep
     cost_id = ident("cst")
     created = utc()
     occurred = normalize_time(body.occurred_at)
+    payload_hash = sha(body.model_dump(mode="json"))
     with s.db() as c:
         existing = c.execute(
-            "SELECT id FROM workflow_costs WHERE org=? AND idempotency_key=?",
+            "SELECT id,payload_hash FROM workflow_costs WHERE org=? AND idempotency_key=?",
             (org, body.idempotency_key),
         ).fetchone()
         if existing:
+            if existing["payload_hash"] != payload_hash:
+                raise HTTPException(409, "Idempotency key already belongs to a different cost record.")
             return {"cost_id": existing["id"], "duplicate": True}
         c.execute(
-            "INSERT INTO workflow_costs VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO workflow_costs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
             (cost_id, org, workflow_id, body.category, body.amount, body.currency,
-             body.source, body.reference, occurred, body.idempotency_key, created),
+             body.source, body.reference, occurred, body.idempotency_key, payload_hash, created),
         )
         s.event(c, org, "economics.cost_recorded", cost_id, {
             "workflow_id": workflow_id, "category": body.category,
@@ -229,18 +232,21 @@ def record_outcome(workflow_id: str, body: OutcomeIn, request: Request, org: str
     outcome_id = ident("out")
     created = utc()
     occurred = normalize_time(body.occurred_at)
+    payload_hash = sha(body.model_dump(mode="json"))
     with s.db() as c:
         existing = c.execute(
-            "SELECT id FROM workflow_outcomes WHERE org=? AND idempotency_key=?",
+            "SELECT id,payload_hash FROM workflow_outcomes WHERE org=? AND idempotency_key=?",
             (org, body.idempotency_key),
         ).fetchone()
         if existing:
+            if existing["payload_hash"] != payload_hash:
+                raise HTTPException(409, "Idempotency key already belongs to a different outcome record.")
             return {"outcome_id": existing["id"], "duplicate": True}
         c.execute(
-            "INSERT INTO workflow_outcomes VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO workflow_outcomes VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (outcome_id, org, workflow_id, body.status, int(body.first_pass),
              body.value_amount, body.value_status, body.currency, body.source,
-             body.reference, occurred, body.idempotency_key, created),
+             body.reference, occurred, body.idempotency_key, payload_hash, created),
         )
         s.event(c, org, "economics.outcome_recorded", outcome_id, {
             "workflow_id": workflow_id, "status": body.status,
@@ -276,10 +282,11 @@ def workflow_economics(workflow_id: str, request: Request, days: int = 30,
     successful = [r for r in outcomes if r["status"] == "successful"]
     failed = len(outcomes) - len(successful)
     first_pass = sum(1 for r in successful if r["first_pass"])
-    verified_value = sum(r["value_amount"] for r in successful if r["value_status"] == "verified")
+    verified_records = [r for r in successful if r["value_status"] == "verified"]
+    verified_value = sum(r["value_amount"] for r in verified_records)
     estimated_value = sum(r["value_amount"] for r in successful if r["value_status"] == "estimated")
     cost_per_success = total_cost / len(successful) if successful else None
-    roi = ((verified_value - total_cost) / total_cost) if total_cost > 0 and verified_value > 0 else None
+    roi = ((verified_value - total_cost) / total_cost) if total_cost > 0 and verified_records else None
     return {
         "workflow_id": workflow_id, "workflow_name": wf["name"], "period_days": days,
         "currency": wf["currency"], "cost": {
@@ -294,12 +301,14 @@ def workflow_economics(workflow_id: str, request: Request, days: int = 30,
         "unit_economics": {
             "fully_loaded_cost_per_success": round(cost_per_success, 4) if cost_per_success is not None else None,
             "verified_value": round(verified_value, 4),
+            "verified_value_records": len(verified_records),
             "estimated_value_not_included_in_roi": round(estimated_value, 4),
             "verified_net_value": round(verified_value - total_cost, 4),
             "verified_roi": round(roi, 6) if roi is not None else None,
         },
         "measurement_notes": [
-            "ROI uses verified value only; estimated and unverified value are excluded.",
+            "ROI uses caller-classified verified value only; estimated and unverified value are excluded.",
+            "Aurelis stores the supplied source reference but does not independently verify the underlying business result.",
             "Costs are included only when explicitly ingested. Missing source systems make the result incomplete.",
             "This is operational measurement, not an independently audited financial statement.",
         ],

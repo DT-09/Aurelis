@@ -105,3 +105,29 @@ def test_commercial_inquiry_intake(client):
     })
     assert response.status_code == 201
     assert response.json()["accepted"] is True
+
+def test_idempotency_key_reuse_with_changed_payload_is_rejected(client):
+    key = bootstrap(client)
+    wid = workflow(client, key)
+    h = headers(key)
+    first = {"category": "compute", "amount": 4, "currency": "USD",
+             "source": "cloud", "idempotency_key": "same-key-different-body"}
+    assert client.post(f"/v1/workflows/{wid}/costs", headers=h, json=first).status_code == 201
+    changed = {**first, "amount": 9}
+    assert client.post(f"/v1/workflows/{wid}/costs", headers=h, json=changed).status_code == 409
+
+def test_zero_verified_value_is_negative_return_when_verified(client):
+    key = bootstrap(client)
+    wid = workflow(client, key)
+    h = headers(key)
+    client.post(f"/v1/workflows/{wid}/costs", headers=h, json={
+        "category": "compute", "amount": 10, "currency": "USD",
+        "source": "cloud", "idempotency_key": "zero-value-cost-0001"
+    })
+    client.post(f"/v1/workflows/{wid}/outcomes", headers=h, json={
+        "status": "successful", "value_amount": 0, "value_status": "verified",
+        "currency": "USD", "source": "approved outcome ledger",
+        "idempotency_key": "zero-value-outcome-01"
+    })
+    result = client.get(f"/v1/workflows/{wid}/economics", headers=h).json()
+    assert result["unit_economics"]["verified_roi"] == -1
